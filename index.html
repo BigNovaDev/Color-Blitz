@@ -123,7 +123,7 @@ const popup = document.getElementById("popup");
 function startGame() {
   score = 0;
   timeLeft = 10.0;
-  player.speed = 4; // 🔧 Reset player speed to default
+  player = { x: 200, y: 200, size: 40, speed: 4 }; // 💡 Fully reset player object
   active = true;
   scoreDisplay.textContent = score;
   popup.style.display = "none";
