@@ -19,6 +19,10 @@
       background: repeating-linear-gradient(45deg, #000, #000 5px, #111 5px, #111 10px);
       border: 4px solid #00ffcc;
       box-shadow: 0 0 20px #00ffcc;
+      width: 90vw;
+      height: 90vw;
+      max-width: 400px;
+      max-height: 400px;
     }
     #ui {
       position: absolute;
@@ -65,118 +69,88 @@
 </head>
 <body>
   <div id="ui">
-    <div>🏆 Score: <span id="score">0</span> ⏱ Time: <span id="time">10.0</span>s</div>
+    🏆 Score: <span id="score">0</span> ⏱ Time: <span id="time">10.0</span>s
     <div id="powerMsg" style="color:#ff0; margin-top:5px;"></div>
   </div>
   <button id="startBtn" onclick="startGame()">🕹️ START</button>
   <canvas id="gameCanvas" width="400" height="400"></canvas>
   <div id="popup"></div>
-
   <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const scoreDisplay = document.getElementById('score');
-    const timeDisplay = document.getElementById('time');
-    const powerMsg = document.getElementById('powerMsg');
-    const startBtn = document.getElementById('startBtn');
-    const popup = document.getElementById('popup');
+    const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let x = 200, y = 200, vx = 2, vy = 2;
+let score = 0, timer = 10.0;
+let active = false;
+let keys = {};
+const orbSize = 20;
+const popup = document.getElementById("popup");
 
-    let x = 180, y = 180, targetX, targetY;
-    let score = 0, timeLeft = 10.0, powerMode = false, powerTimer = 0;
-    let keys = {}, gameRunning = false;
+function startGame() {
+  score = 0;
+  timer = 10.0;
+  active = true;
+  popup.style.display = "none";
+  document.getElementById("score").textContent = score;
+  document.getElementById("powerMsg").textContent = "";
+  loop();
+}
 
-    function randomTarget() {
-      targetX = Math.floor(Math.random() * 360);
-      targetY = Math.floor(Math.random() * 360);
-    }
+function loop() {
+  if (!active) return;
 
-    function draw() {
-      ctx.clearRect(0, 0, 400, 400);
-      ctx.fillStyle = '#ff0066';
-      ctx.beginPath();
-      ctx.arc(targetX + 20, targetY + 20, 15, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = powerMode ? '#ffff00' : '#00ffcc';
-      ctx.fillRect(x, y, 40, 40);
-    }
+  // Timer
+  timer -= 0.016;
+  document.getElementById("time").textContent = timer.toFixed(1);
+  if (timer <= 0) return endGame();
 
-    function movePlayer() {
-      const speed = powerMode ? 4 : 2;
-      if (keys['ArrowUp'] || keys['w']) y = Math.max(0, y - speed);
-      if (keys['ArrowDown'] || keys['s']) y = Math.min(360, y + speed);
-      if (keys['ArrowLeft'] || keys['a']) x = Math.max(0, x - speed);
-      if (keys['ArrowRight'] || keys['d']) x = Math.min(360, x + speed);
-    }
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
 
-    function checkCollision() {
-      const dx = x + 20 - (targetX + 20);
-      const dy = y + 20 - (targetY + 20);
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      if (distance < 40) {
-        score++;
-        scoreDisplay.textContent = score;
-        randomTarget();
-        timeLeft = Math.min(timeLeft + 2.5, 3.5);
-        timeDisplay.textContent = timeLeft.toFixed(1);
-        if (Math.random() < 0.25) {
-          powerMode = true;
-          powerTimer = 5;
-          powerMsg.textContent = '💥 Power Mode Activated!';
-        }
-      }
-    }
+function update() {
+  // Move orb
+  x += vx;
+  y += vy;
 
-    function updatePowerMode() {
-      if (powerMode) {
-        powerTimer--;
-        if (powerTimer <= 0) {
-          powerMode = false;
-          powerMsg.textContent = '';
-        }
-      }
-    }
+  // Bounce
+  if (x < 0 || x + orbSize > canvas.width) vx *= -1;
+  if (y < 0 || y + orbSize > canvas.height) vy *= -1;
 
-    function endGame() {
-      gameRunning = false;
-      popup.innerHTML = `<h2>🎉 Game Over!</h2><p>Final Score: ${score}</p>`;
-      popup.style.display = 'block';
-      startBtn.style.display = 'block';
-    }
+  // Player input
+  if (keys["arrowleft"]) x -= 3;
+  if (keys["arrowright"]) x += 3;
+  if (keys["arrowup"]) y -= 3;
+  if (keys["arrowdown"]) y += 3;
+}
 
-    function startGame() {
-      gameRunning = true;
-      score = 0;
-      timeLeft = 10.0;
-      powerMode = false;
-      scoreDisplay.textContent = score;
-      timeDisplay.textContent = timeLeft.toFixed(1);
-      powerMsg.textContent = '';
-      x = 180; y = 180;
-      randomTarget();
-      startBtn.style.display = 'none';
-      popup.style.display = 'none';
-      document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-      document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const loop = setInterval(() => {
-        if (!gameRunning) return;
-        movePlayer();
-        checkCollision();
-        draw();
-      }, 20);
+  // Orb
+  ctx.beginPath();
+  ctx.arc(x + orbSize / 2, y + orbSize / 2, orbSize, 0, Math.PI * 2);
+  ctx.fillStyle = "#ff0066";
+  ctx.fill();
+}
 
-      const timer = setInterval(() => {
-        if (!gameRunning) return;
-        timeLeft -= 0.2;
-        updatePowerMode();
-        timeDisplay.textContent = Math.max(0, timeLeft).toFixed(1);
-        if (timeLeft <= 0) {
-          clearInterval(loop);
-          clearInterval(timer);
-          endGame();
-        }
-      }, 200);
-    }
+function endGame() {
+  active = false;
+  popup.innerHTML = `💥 Time's Up!<br>Final Score: ${score}`;
+  popup.style.display = "block";
+}
+
+// Touch support
+canvas.addEventListener("touchmove", e => {
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  x = Math.max(0, Math.min(canvas.width - orbSize, touch.clientX - rect.left - orbSize / 2));
+  y = Math.max(0, Math.min(canvas.height - orbSize, touch.clientY - rect.top - orbSize / 2));
+});
+
+// Keyboard support
+document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
   </script>
 </body>
 </html>
