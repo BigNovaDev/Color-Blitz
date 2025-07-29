@@ -17,8 +17,6 @@
       flex-direction: column;
       align-items: center;
       -webkit-tap-highlight-color: transparent;
-      -webkit-user-select: none;
-      -ms-user-select: none;
       user-select: none;
     }
 
@@ -64,45 +62,21 @@
       box-shadow: 0 0 20px #ff0066;
       display: none;
       text-align: center;
-      z-index: 999;
-    }
-
-    #mobileControls {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-      z-index: 999;
-    }
-
-    #mobileControls button {
-      font-size: 1.5rem;
-      margin: 5px;
-      background: #222;
-      color: #00ffcc;
-      border: 2px solid #00ffcc;
-      border-radius: 8px;
-      padding: 10px;
-      touch-action: manipulation;
     }
   </style>
 </head>
 <body oncontextmenu="return false">
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+
   <div id="ui">
-    🏆 Score: <span id="score">0</span> ⏱ Time: <span id="time">10.0</span>s
-    <br />
-    <button id="startBtn" onclick="startGame()">🕹️ START</button>
+    <div>Score: <span id="score">0</span></div>
+    <div>Time Left: <span id="time">10.0</span>s</div>
+    <button id="startBtn" onclick="startGame()">START</button>
   </div>
 
-  <canvas id="gameCanvas" width="400" height="400"></canvas>
-  <div id="popup"></div>
-
-  <div id="mobileControls">
-    <button onmousedown="keys['arrowup']=true" onmouseup="keys['arrowup']=false" ontouchstart="keys['arrowup']=true" ontouchend="keys['arrowup']=false">▲</button><br>
-    <button onmousedown="keys['arrowleft']=true" onmouseup="keys['arrowleft']=false" ontouchstart="keys['arrowleft']=true" ontouchend="keys['arrowleft']=false">◄</button>
-    <button onmousedown="keys['arrowdown']=true" onmouseup="keys['arrowdown']=false" ontouchstart="keys['arrowdown']=true" ontouchend="keys['arrowdown']=false">▼</button>
-    <button onmousedown="keys['arrowright']=true" onmouseup="keys['arrowright']=false" ontouchstart="keys['arrowright']=true" ontouchend="keys['arrowright']=false">►</button>
+  <div id="popup">
+    <p>Time’s up! 🕒</p>
+    <p>Click START to play again.</p>
   </div>
 
   <script>
@@ -113,6 +87,7 @@ let score = 0;
 let timeLeft = 10.0;
 let active = false;
 let orb = null;
+const keys = {};
 
 const player = {
   x: 200,
@@ -124,7 +99,7 @@ const player = {
 function resetPlayer() {
   player.x = 200;
   player.y = 200;
-  player.speed = 4; // 👈 Ensures speed is reset every start
+  player.speed = 4; // ✅ Ensures speed reset on game start
 }
 
 function spawnOrb() {
@@ -138,10 +113,10 @@ function spawnOrb() {
 function startGame() {
   score = 0;
   timeLeft = 10.0;
-  resetPlayer(); // ✅ Reset position and speed
+  resetPlayer();
   active = true;
-  scoreDisplay.textContent = score;
-  popup.style.display = "none";
+  document.getElementById("score").textContent = score;
+  document.getElementById("popup").style.display = "none";
   spawnOrb();
   requestAnimationFrame(loop);
 }
@@ -150,7 +125,9 @@ function update() {
   if (!active) return;
 
   timeLeft -= 0.016;
-  timeDisplay.textContent = timeLeft.toFixed(1);
+  document.getElementById("time").textContent = timeLeft.toFixed(1);
+
+  handleMovement();
 
   if (
     orb &&
@@ -158,27 +135,27 @@ function update() {
     Math.abs(player.y - orb.y) < player.size
   ) {
     score++;
-    player.speed += 0.5; // 🚀 Speed increases when collecting orb
-    scoreDisplay.textContent = score;
+    player.speed += 0.5;
+    document.getElementById("score").textContent = score;
     spawnOrb();
   }
 
   if (timeLeft <= 0) {
     active = false;
-    popup.style.display = "block";
+    document.getElementById("popup").style.display = "block";
   }
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Player
+  // Draw player
   ctx.fillStyle = "#00ffcc";
   ctx.beginPath();
   ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
   ctx.fill();
 
-  // Orb
+  // Draw orb
   if (orb) {
     ctx.fillStyle = "#ff0066";
     ctx.beginPath();
@@ -195,23 +172,25 @@ function loop() {
   }
 }
 
-document.addEventListener("keydown", (e) => {
-  if (!active) return;
+function handleMovement() {
   const s = player.speed;
-  if (e.key === "ArrowUp") player.y -= s;
-  if (e.key === "ArrowDown") player.y += s;
-  if (e.key === "ArrowLeft") player.x -= s;
-  if (e.key === "ArrowRight") player.x += s;
+  if (keys["arrowup"]) player.y -= s;
+  if (keys["arrowdown"]) player.y += s;
+  if (keys["arrowleft"]) player.x -= s;
+  if (keys["arrowright"]) player.x += s;
 
   // Edge wrap
   player.x = (player.x + canvas.width) % canvas.width;
   player.y = (player.y + canvas.height) % canvas.height;
+}
+
+document.addEventListener("keydown", (e) => {
+  keys[e.key.toLowerCase()] = true;
 });
 
-// UI elements
-const scoreDisplay = document.getElementById("score");
-const timeDisplay = document.getElementById("time");
-const popup = document.getElementById("popup");
+document.addEventListener("keyup", (e) => {
+  keys[e.key.toLowerCase()] = false;
+});
   </script>
 </body>
 </html>
