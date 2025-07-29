@@ -106,24 +106,39 @@
   </div>
 
   <script>
-    const canvas = document.getElementById("gameCanvas");
+    const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-let player = { x: 200, y: 200, size: 40, speed: 4 };
-let orb = { x: 100, y: 100, size: 20 };
-let keys = {};
 let score = 0;
 let timeLeft = 10.0;
 let active = false;
+let orb = null;
 
-const timeDisplay = document.getElementById("time");
-const scoreDisplay = document.getElementById("score");
-const popup = document.getElementById("popup");
+const player = {
+  x: 200,
+  y: 200,
+  size: 40,
+  speed: 4,
+};
+
+function resetPlayer() {
+  player.x = 200;
+  player.y = 200;
+  player.speed = 4; // 👈 Ensures speed is reset every start
+}
+
+function spawnOrb() {
+  orb = {
+    x: Math.random() * (canvas.width - 40),
+    y: Math.random() * (canvas.height - 40),
+    size: 20,
+  };
+}
 
 function startGame() {
   score = 0;
   timeLeft = 10.0;
-  player = { x: 200, y: 200, size: 40, speed: 4 }; // 💡 Fully reset player object
+  resetPlayer(); // ✅ Reset position and speed
   active = true;
   scoreDisplay.textContent = score;
   popup.style.display = "none";
@@ -131,42 +146,26 @@ function startGame() {
   requestAnimationFrame(loop);
 }
 
-function loop() {
+function update() {
   if (!active) return;
 
   timeLeft -= 0.016;
   timeDisplay.textContent = timeLeft.toFixed(1);
 
-  if (timeLeft <= 0) {
-    endGame();
-    return;
+  if (
+    orb &&
+    Math.abs(player.x - orb.x) < player.size &&
+    Math.abs(player.y - orb.y) < player.size
+  ) {
+    score++;
+    player.speed += 0.5; // 🚀 Speed increases when collecting orb
+    scoreDisplay.textContent = score;
+    spawnOrb();
   }
 
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-
-function update() {
-  if (keys["arrowleft"] || keys["a"]) player.x -= player.speed;
-  if (keys["arrowright"] || keys["d"]) player.x += player.speed;
-  if (keys["arrowup"] || keys["w"]) player.y -= player.speed;
-  if (keys["arrowdown"] || keys["s"]) player.y += player.speed;
-
-  // Boundaries
-  player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
-  player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
-
-  // Collision check
-  const dx = player.x + player.size / 2 - (orb.x + orb.size / 2);
-  const dy = player.y + player.size / 2 - (orb.y + orb.size / 2);
-  const distance = Math.sqrt(dx * dx + dy * dy);
-
-  if (distance < player.size / 2 + orb.size / 2) {
-    score++;
-    scoreDisplay.textContent = score;
-    timeLeft += 1;
-    spawnOrb();
+  if (timeLeft <= 0) {
+    active = false;
+    popup.style.display = "block";
   }
 }
 
@@ -174,35 +173,45 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Player
-  ctx.beginPath();
-  ctx.arc(player.x + player.size / 2, player.y + player.size / 2, player.size / 2, 0, Math.PI * 2);
   ctx.fillStyle = "#00ffcc";
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
   ctx.fill();
 
   // Orb
-  ctx.beginPath();
-  ctx.arc(orb.x + orb.size / 2, orb.y + orb.size / 2, orb.size / 2, 0, Math.PI * 2);
-  ctx.fillStyle = "yellow";
-  ctx.shadowColor = "gold";
-  ctx.shadowBlur = 20;
-  ctx.fill();
-  ctx.shadowBlur = 0;
+  if (orb) {
+    ctx.fillStyle = "#ff0066";
+    ctx.beginPath();
+    ctx.arc(orb.x, orb.y, orb.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
-function spawnOrb() {
-  orb.x = Math.random() * (canvas.width - orb.size);
-  orb.y = Math.random() * (canvas.height - orb.size);
+function loop() {
+  update();
+  draw();
+  if (active) {
+    requestAnimationFrame(loop);
+  }
 }
 
-function endGame() {
-  active = false;
-  popup.innerHTML = `⏰ Time's Up!<br>Final Score: ${score}`;
-  popup.style.display = "block";
-}
+document.addEventListener("keydown", (e) => {
+  if (!active) return;
+  const s = player.speed;
+  if (e.key === "ArrowUp") player.y -= s;
+  if (e.key === "ArrowDown") player.y += s;
+  if (e.key === "ArrowLeft") player.x -= s;
+  if (e.key === "ArrowRight") player.x += s;
 
-// Keyboard controls
-document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+  // Edge wrap
+  player.x = (player.x + canvas.width) % canvas.width;
+  player.y = (player.y + canvas.height) % canvas.height;
+});
+
+// UI elements
+const scoreDisplay = document.getElementById("score");
+const timeDisplay = document.getElementById("time");
+const popup = document.getElementById("popup");
   </script>
 </body>
 </html>
