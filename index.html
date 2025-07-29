@@ -16,6 +16,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      user-select: none;
     }
 
     canvas {
@@ -80,10 +81,11 @@
       border: 2px solid #00ffcc;
       border-radius: 8px;
       padding: 10px;
+      touch-action: manipulation;
     }
   </style>
 </head>
-<body>
+<body oncontextmenu="return false">
   <div id="ui">
     🏆 Score: <span id="score">0</span> ⏱ Time: <span id="time">10.0</span>s
     <br />
@@ -94,10 +96,10 @@
   <div id="popup"></div>
 
   <div id="mobileControls">
-    <button onclick="keys['arrowup']=true; setTimeout(()=>keys['arrowup']=false, 100)">▲</button><br>
-    <button onclick="keys['arrowleft']=true; setTimeout(()=>keys['arrowleft']=false, 100)">◄</button>
-    <button onclick="keys['arrowdown']=true; setTimeout(()=>keys['arrowdown']=false, 100)">▼</button>
-    <button onclick="keys['arrowright']=true; setTimeout(()=>keys['arrowright']=false, 100)">►</button>
+    <button onmousedown="keys['arrowup']=true" onmouseup="keys['arrowup']=false" ontouchstart="keys['arrowup']=true" ontouchend="keys['arrowup']=false">▲</button><br>
+    <button onmousedown="keys['arrowleft']=true" onmouseup="keys['arrowleft']=false" ontouchstart="keys['arrowleft']=true" ontouchend="keys['arrowleft']=false">◄</button>
+    <button onmousedown="keys['arrowdown']=true" onmouseup="keys['arrowdown']=false" ontouchstart="keys['arrowdown']=true" ontouchend="keys['arrowdown']=false">▼</button>
+    <button onmousedown="keys['arrowright']=true" onmouseup="keys['arrowright']=false" ontouchstart="keys['arrowright']=true" ontouchend="keys['arrowright']=false">►</button>
   </div>
 
   <script>
@@ -142,7 +144,6 @@ function loop() {
 }
 
 function update() {
-  // Movement
   if (keys["arrowleft"] || keys["a"]) player.x -= player.speed;
   if (keys["arrowright"] || keys["d"]) player.x += player.speed;
   if (keys["arrowup"] || keys["w"]) player.y -= player.speed;
@@ -152,12 +153,12 @@ function update() {
   player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
   player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
 
-  // Collision
+  // Collision check
   const dx = player.x + player.size / 2 - (orb.x + orb.size / 2);
   const dy = player.y + player.size / 2 - (orb.y + orb.size / 2);
-  const dist = Math.sqrt(dx * dx + dy * dy);
+  const distance = Math.sqrt(dx * dx + dy * dy);
 
-  if (dist < player.size / 2 + orb.size / 2) {
+  if (distance < player.size / 2 + orb.size / 2) {
     score++;
     scoreDisplay.textContent = score;
     timeLeft += 1;
@@ -195,7 +196,7 @@ function endGame() {
   popup.style.display = "block";
 }
 
-// Keyboard input
+// Keyboard controls
 document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
   </script>
