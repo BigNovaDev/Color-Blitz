@@ -62,6 +62,25 @@
       text-align: center;
       z-index: 999;
     }
+
+    #mobileControls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      z-index: 999;
+    }
+
+    #mobileControls button {
+      font-size: 1.5rem;
+      margin: 5px;
+      background: #222;
+      color: #00ffcc;
+      border: 2px solid #00ffcc;
+      border-radius: 8px;
+      padding: 10px;
+    }
   </style>
 </head>
 <body>
@@ -70,15 +89,23 @@
     <br />
     <button id="startBtn" onclick="startGame()">🕹️ START</button>
   </div>
+
   <canvas id="gameCanvas" width="400" height="400"></canvas>
   <div id="popup"></div>
+
+  <div id="mobileControls">
+    <button onclick="keys['arrowup']=true; setTimeout(()=>keys['arrowup']=false, 100)">▲</button><br>
+    <button onclick="keys['arrowleft']=true; setTimeout(()=>keys['arrowleft']=false, 100)">◄</button>
+    <button onclick="keys['arrowdown']=true; setTimeout(()=>keys['arrowdown']=false, 100)">▼</button>
+    <button onclick="keys['arrowright']=true; setTimeout(()=>keys['arrowright']=false, 100)">►</button>
+  </div>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-let player = { x: 200, y: 200, size: 40, speed: 4 };   // Bigger player (was 20)
-let orb = { x: 100, y: 100, size: 20 };                // Bigger orb (was 10)
+let player = { x: 200, y: 200, size: 40, speed: 4 };
+let orb = { x: 100, y: 100, size: 20 };
 let keys = {};
 let score = 0;
 let timeLeft = 10.0;
@@ -115,7 +142,7 @@ function loop() {
 }
 
 function update() {
-  // Keyboard movement
+  // Movement
   if (keys["arrowleft"] || keys["a"]) player.x -= player.speed;
   if (keys["arrowright"] || keys["d"]) player.x += player.speed;
   if (keys["arrowup"] || keys["w"]) player.y -= player.speed;
@@ -125,12 +152,12 @@ function update() {
   player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
   player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
 
-  // Collision detection
+  // Collision
   const dx = player.x + player.size / 2 - (orb.x + orb.size / 2);
   const dy = player.y + player.size / 2 - (orb.y + orb.size / 2);
-  const distance = Math.sqrt(dx * dx + dy * dy);
+  const dist = Math.sqrt(dx * dx + dy * dy);
 
-  if (distance < player.size / 2 + orb.size / 2) {
+  if (dist < player.size / 2 + orb.size / 2) {
     score++;
     scoreDisplay.textContent = score;
     timeLeft += 1;
@@ -152,7 +179,7 @@ function draw() {
   ctx.arc(orb.x + orb.size / 2, orb.y + orb.size / 2, orb.size / 2, 0, Math.PI * 2);
   ctx.fillStyle = "yellow";
   ctx.shadowColor = "gold";
-  ctx.shadowBlur = 20; // Boosted glow to match size
+  ctx.shadowBlur = 20;
   ctx.fill();
   ctx.shadowBlur = 0;
 }
@@ -168,16 +195,9 @@ function endGame() {
   popup.style.display = "block";
 }
 
-// Input
+// Keyboard input
 document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-
-canvas.addEventListener("touchmove", e => {
-  const touch = e.touches[0];
-  const rect = canvas.getBoundingClientRect();
-  player.x = Math.max(0, Math.min(canvas.width - player.size, touch.clientX - rect.left - player.size / 2));
-  player.y = Math.max(0, Math.min(canvas.height - player.size, touch.clientY - rect.top - player.size / 2));
-});
   </script>
 </body>
 </html>
