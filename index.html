@@ -1,102 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Ticking Orb</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sequence Master</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
     body {
-      margin: 0;
-      background-color: rgb(25, 25, 25);
-      font-family: 'Press Start 2P', cursive;
-      color: #00ffcc;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      -webkit-tap-highlight-color: transparent;
+      background: #1e1e2f;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      margin-top: 30px;
       user-select: none;
     }
 
-    canvas {
-      background: repeating-linear-gradient(45deg, #000, #000 5px, #111 5px, #111 10px);
-      border: 4px solid #00ffcc;
-      box-shadow: 0 0 20px #00ffcc;
-      width: 400px;
-      height: 400px;
-      max-width: 90vw;
-      margin-top: 30px;
+    #gameBoard {
+      display: grid;
+      grid-template-columns: repeat(2, 120px);
+      grid-gap: 30px;
+      justify-content: center;
+      margin-top: 40px;
     }
 
-    #ui {
-      margin-top: 20px;
-      font-size: 0.8rem;
-      text-align: center;
+    .tile {
+      width: 120px;
+      height: 120px;
+      border-radius: 12px;
+      opacity: 0.6;
+      transition: transform 0.3s, opacity 0.3s;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      cursor: pointer;
+    }
+
+    .tile:hover {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+
+    #red { background: #e63946; }
+    #green { background: #2a9d8f; }
+    #blue { background: #457b9d; }
+    #yellow { background: #f4a261; }
+
+    .flash {
+      opacity: 1 !important;
+      transform: scale(1.2);
+    }
+
+    #modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10,10,10,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    #modal.show {
+      display: flex;
+    }
+
+    #modalContent {
+      background: #fff;
+      color: #222;
+      padding: 30px;
+      border-radius: 10px;
+      font-size: 1.2em;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 8px 16px;
+      font-size: 1em;
+      border: none;
+      border-radius: 6px;
+      background: #457b9d;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #2a9d8f;
     }
   </style>
 </head>
-<body>
-  <canvas></canvas>
-  <div id="ui">Use WASD to move</div>
+<body oncontextmenu="return false">
+  <h1>Color Blitz</h1>
+  <h3>BigNova_Dev Productions</h3>
+  <div id="gameBoard">
+    <div class="tile" id="red"></div>
+    <div class="tile" id="green"></div>
+    <div class="tile" id="blue"></div>
+    <div class="tile" id="yellow"></div>
+  </div>
+  <p>Score: <span id="round">1</span></p>
+
+  <div id="modal">
+    <div id="modalContent"></div>
+  </div>
 
   <script>
-    const canvas = document.querySelector('canvas');
-    const ctx = canvas.getContext('2d');
+    const tiles = ["red", "green", "blue", "yellow"];
+    let sequence = [];
+    let playerSeq = [];
+    let round = 1;
 
-    const player = {
-      x: canvas.width / 2,
-      y: canvas.height / 2,
-      radius: 10,
-      speed: 2,
-      velocityX: 0,
-      velocityY: 0
-    };
+    const roundDisplay = document.getElementById("round");
+    const modal = document.getElementById("modal");
+    const modalContent = document.getElementById("modalContent");
 
-    const keys = {};
+    function flashTile(id) {
+      const tile = document.getElementById(id);
+      tile.classList.add("flash");
+      setTimeout(() => tile.classList.remove("flash"), 500);
+    }
 
-    document.addEventListener('keydown', e => {
-      keys[e.key.toLowerCase()] = true;
+    function playSequence() {
+      playerSeq = [];
+      sequence.push(tiles[Math.floor(Math.random() * tiles.length)]);
+      let i = 0;
+      const interval = setInterval(() => {
+        flashTile(sequence[i]);
+        i++;
+        if (i >= sequence.length) clearInterval(interval);
+      }, 700);
+    }
+
+    function showModal(message) {
+      modalContent.innerHTML = message + `<br><br><button onclick="location.reload()">Restart</button>`;
+      modal.classList.add("show");
+    }
+
+    function checkInput(id) {
+      playerSeq.push(id);
+      const idx = playerSeq.length - 1;
+      if (playerSeq[idx] !== sequence[idx]) {
+        showModal(`Wrong color! Score: ${round}`);
+        return;
+      }
+      if (playerSeq.length === sequence.length) {
+        round++;
+        roundDisplay.textContent = round;
+        setTimeout(playSequence, 1000);
+      }
+    }
+
+    tiles.forEach(color => {
+      document.getElementById(color).onclick = () => checkInput(color);
     });
 
-    document.addEventListener('keyup', e => {
-      keys[e.key.toLowerCase()] = false;
-    });
-
-    function updatePlayerPosition() {
-      player.velocityX = 0;
-      player.velocityY = 0;
-
-      if (keys['w']) player.velocityY = -player.speed;
-      if (keys['a']) player.velocityX = -player.speed;
-      if (keys['s']) player.velocityY = player.speed;
-      if (keys['d']) player.velocityX = player.speed;
-
-      player.x += player.velocityX;
-      player.y += player.velocityY;
-
-      // Keep inside canvas bounds
-      player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
-      player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
-    }
-
-    function drawPlayer() {
-      ctx.beginPath();
-      ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-      ctx.fillStyle = '#00ffcc';
-      ctx.fill();
-      ctx.closePath();
-    }
-
-    function gameLoop() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      updatePlayerPosition();
-      drawPlayer();
-      requestAnimationFrame(gameLoop);
-    }
-
-    gameLoop();
+    playSequence();
   </script>
 </body>
 </html>
