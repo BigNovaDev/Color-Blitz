@@ -35,110 +35,68 @@
       font-size: 0.8rem;
       text-align: center;
     }
-
-    #startBtn {
-      margin-top: 10px;
-      padding: 8px 16px;
-      font-size: 0.8rem;
-      background-color: #ff0066;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      box-shadow: 0 0 10px #ff0066;
-      cursor: pointer;
-    }
-
-    #popup {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #000;
-      color: #ff0066;
-      border: 2px solid #ff0066;
-      padding: 30px;
-      font-size: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 0 20px #ff0066;
-      display: none;
-      text-align: center;
-    }
   </style>
 </head>
-<body oncontextmenu="return false">
-  <canvas id="gameCanvas" width="400" height="400"></canvas>
-
-  <div id="ui">
-    <div>Score: <span id="score">0</span></div>
-    <div>Time Left: <span id="time">10.0</span>s</div>
-    <button id="startBtn" onclick="startGame()">START</button>
-  </div>
-
-  <div id="popup">
-    <p>Time’s up! 🕒</p>
-    <p>Click START to play again.</p>
-  </div>
+<body>
+  <canvas></canvas>
+  <div id="ui">Use WASD to move</div>
 
   <script>
     const canvas = document.querySelector('canvas');
-const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
 
-// 🎯 Original player setup (adjust if needed)
-const player = {
-  x: canvas.width / 2,
-  y: canvas.height / 2,
-  radius: 10,
-  speed: 2,
-  velocityX: 0,
-  velocityY: 0
-};
+    const player = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      radius: 10,
+      speed: 2,
+      velocityX: 0,
+      velocityY: 0
+    };
 
-const keys = {};
+    const keys = {};
 
-document.addEventListener('keydown', e => {
-  keys[e.key.toLowerCase()] = true;
-});
+    document.addEventListener('keydown', e => {
+      keys[e.key.toLowerCase()] = true;
+    });
 
-document.addEventListener('keyup', e => {
-  keys[e.key.toLowerCase()] = false;
-});
+    document.addEventListener('keyup', e => {
+      keys[e.key.toLowerCase()] = false;
+    });
 
-// 🛸 Player movement logic (WASD with velocity)
-function updatePlayerPosition() {
-  player.velocityX = 0;
-  player.velocityY = 0;
+    function updatePlayerPosition() {
+      player.velocityX = 0;
+      player.velocityY = 0;
 
-  if (keys['w']) player.velocityY = -player.speed;
-  if (keys['a']) player.velocityX = -player.speed;
-  if (keys['s']) player.velocityY = player.speed;
-  if (keys['d']) player.velocityX = player.speed;
+      if (keys['w']) player.velocityY = -player.speed;
+      if (keys['a']) player.velocityX = -player.speed;
+      if (keys['s']) player.velocityY = player.speed;
+      if (keys['d']) player.velocityX = player.speed;
 
-  player.x += player.velocityX;
-  player.y += player.velocityY;
+      player.x += player.velocityX;
+      player.y += player.velocityY;
 
-  // Optional: Keep player in bounds
-  player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
-  player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
-}
+      // Keep inside canvas bounds
+      player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+      player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+    }
 
-// 🎨 Draw the player
-function drawPlayer() {
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-  ctx.fillStyle = '#00ffcc';
-  ctx.fill();
-  ctx.closePath();
-}
+    function drawPlayer() {
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+      ctx.fillStyle = '#00ffcc';
+      ctx.fill();
+      ctx.closePath();
+    }
 
-// 🔁 Game loop (runs smoothly)
-function gameLoop() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  updatePlayerPosition();
-  drawPlayer();
-  requestAnimationFrame(gameLoop);
-}
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      updatePlayerPosition();
+      drawPlayer();
+      requestAnimationFrame(gameLoop);
+    }
 
-gameLoop();
+    gameLoop();
   </script>
 </body>
 </html>
