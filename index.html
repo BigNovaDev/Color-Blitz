@@ -80,117 +80,65 @@
   </div>
 
   <script>
-    const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+    const canvas = document.querySelector('canvas');
+const ctx = canvas.getContext('2d');
 
-let score = 0;
-let timeLeft = 10.0;
-let active = false;
-let orb = null;
-const keys = {};
-
+// 🎯 Original player setup (adjust if needed)
 const player = {
-  x: 200,
-  y: 200,
-  size: 40,
-  speed: 4,
+  x: canvas.width / 2,
+  y: canvas.height / 2,
+  radius: 10,
+  speed: 2,
+  velocityX: 0,
+  velocityY: 0
 };
 
-function resetPlayer() {
-  player.x = 200;
-  player.y = 200;
-  player.speed = 4; // ✅ Ensures speed reset on game start
-}
+const keys = {};
 
-function spawnOrb() {
-  orb = {
-    x: Math.random() * (canvas.width - 40),
-    y: Math.random() * (canvas.height - 40),
-    size: 20,
-  };
-}
-
-function startGame() {
-  score = 0;
-  timeLeft = 10.0;
-  resetPlayer();
-  active = true;
-  document.getElementById("score").textContent = score;
-  document.getElementById("popup").style.display = "none";
-  spawnOrb();
-  requestAnimationFrame(loop);
-}
-
-function update() {
-  if (!active) return;
-
-  timeLeft -= 0.016;
-  document.getElementById("time").textContent = timeLeft.toFixed(1);
-
-  handleMovement();
-
-  if (
-    orb &&
-    Math.abs(player.x - orb.x) < player.size &&
-    Math.abs(player.y - orb.y) < player.size
-  ) {
-    score++;
-    player.speed += 0.5;
-    document.getElementById("score").textContent = score;
-    spawnOrb();
-  }
-
-  if (timeLeft <= 0) {
-    active = false;
-    document.getElementById("popup").style.display = "block";
-  }
-}
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Draw player
-  ctx.fillStyle = "#00ffcc";
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Draw orb
-  if (orb) {
-    ctx.fillStyle = "#ff0066";
-    ctx.beginPath();
-    ctx.arc(orb.x, orb.y, orb.size, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-function loop() {
-  update();
-  draw();
-  if (active) {
-    requestAnimationFrame(loop);
-  }
-}
-
-function handleMovement() {
-  const s = player.speed;
-  if (keys["arrowup"]) player.y -= s;
-  if (keys["arrowdown"]) player.y += s;
-  if (keys["arrowleft"]) player.x -= s;
-  if (keys["arrowright"]) player.x += s;
-
-  // Edge wrap
-  player.x = (player.x + canvas.width) % canvas.width;
-  player.y = (player.y + canvas.height) % canvas.height;
-}
-
-document.addEventListener("keydown", (e) => {
+document.addEventListener('keydown', e => {
   keys[e.key.toLowerCase()] = true;
 });
 
-document.addEventListener("keyup", (e) => {
+document.addEventListener('keyup', e => {
   keys[e.key.toLowerCase()] = false;
 });
+
+// 🛸 Player movement logic (WASD with velocity)
+function updatePlayerPosition() {
+  player.velocityX = 0;
+  player.velocityY = 0;
+
+  if (keys['w']) player.velocityY = -player.speed;
+  if (keys['a']) player.velocityX = -player.speed;
+  if (keys['s']) player.velocityY = player.speed;
+  if (keys['d']) player.velocityX = player.speed;
+
+  player.x += player.velocityX;
+  player.y += player.velocityY;
+
+  // Optional: Keep player in bounds
+  player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+  player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+}
+
+// 🎨 Draw the player
+function drawPlayer() {
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+  ctx.fillStyle = '#00ffcc';
+  ctx.fill();
+  ctx.closePath();
+}
+
+// 🔁 Game loop (runs smoothly)
+function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  updatePlayerPosition();
+  drawPlayer();
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
   </script>
 </body>
 </html>
